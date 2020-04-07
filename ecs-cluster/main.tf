@@ -35,8 +35,8 @@ module "ecs_cluster" {
   cluster_desired_capacity = var.desired_capacity
 }
 
-module "elb" {
-  source = ".//modules/elb"
+module "alb" {
+  source = ".//modules/alb"
 
   name                      = var.name
   environment_tag           = var.environment_tag
@@ -49,16 +49,18 @@ module "grafana-deploy" {
 
   name            = var.name
   environment_tag = var.environment_tag
-  elb_role_arn    = module.elb.elb_role_arn
+  alb_role_arn    = module.alb.alb_role_arn
   route_53_zone   = var.route_53_zone
 
-  elb_name = module.elb.elb_name
-  dns_name = module.elb.dns_name
+  alb_name        = module.alb.alb_name
+  dns_name        = module.alb.dns_name
+  aws_alb_zone_id = module.alb.aws_alb_zone_id
 
-  elb_policy = module.elb.elb_policy
+  alb_policy = module.alb.alb_policy
   cluster_id = module.ecs_cluster.cluster_id
 
   instance_role_arn = module.ecs_cluster.instance_role_arn
+  target_group_arn  = module.alb.target_group_arn
 }
 
 #

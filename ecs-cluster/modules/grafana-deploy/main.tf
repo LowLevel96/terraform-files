@@ -11,7 +11,7 @@ module ecs-container-definition {
     {
       containerPort = 3000
       hostPort      = 80
-      protocol      = "tcp"
+      protocol      = "http"
     }
   ]
 }
@@ -41,8 +41,8 @@ resource aws_ecs_service grafana-service {
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.grafana_task.arn
   desired_count   = 2
-  iam_role        = var.elb_role_arn
-  depends_on      = [var.elb_policy]
+  iam_role        = var.alb_role_arn
+  depends_on      = [var.alb_policy]
 
   ordered_placement_strategy {
     type  = "binpack"
@@ -50,9 +50,9 @@ resource aws_ecs_service grafana-service {
   }
 
   load_balancer {
-    elb_name       = var.elb_name
-    container_name = "grafana"
-    container_port = 3000
+    target_group_arn = var.target_group_arn
+    container_name   = "grafana"
+    container_port   = 3000
   }
 }
 
@@ -65,10 +65,13 @@ data aws_route53_zone zone_selected {
 resource aws_route53_record grafana-dns {
   zone_id = data.aws_route53_zone.zone_selected.zone_id
   name    = format("grafana.%s", var.route_53_zone)
-  type    = "CNAME"
-  ttl     = "5"
+  type    = "A"
 
-  records = [var.dns_name]
+  alias {
+    name                   = var.dns_name
+    zone_id                = var.aws_alb_zone_id
+    evaluate_target_health = true
+  }
 }
 
 

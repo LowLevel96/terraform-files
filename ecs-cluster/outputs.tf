@@ -7,5 +7,5 @@ output grafana_aws_iam_role {
 }
 
 output grafana_dns_address {
-  output = format("Grafana URL: %s", var.route_53_zone)
+  value = format("Grafana URL: grafana.%s", replace(var.route_53_zone, ".", ""))
 }

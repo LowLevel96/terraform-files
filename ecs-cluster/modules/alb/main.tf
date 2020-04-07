@@ -1,9 +1,9 @@
 ###################
 # IAM Role Policy #
 ##################
-resource "aws_iam_role_policy" "ecs_elb_policy" {
-  name = format("%s_elb", replace(lower(var.name), " ", "_"))
-  role = aws_iam_role.ecs_elb_role.id
+resource "aws_iam_role_policy" "ecs_alb_policy" {
+  name = format("%s_alb", replace(lower(var.name), " ", "_"))
+  role = aws_iam_role.ecs_alb_role.id
 
   policy = <<-EOF
   {
@@ -13,6 +13,7 @@ resource "aws_iam_role_policy" "ecs_elb_policy" {
               "Sid": "VisualEditor0",
               "Effect": "Allow",
               "Action": [
+                  "ec2:Describe*",
                   "elasticloadbalancing:DescribeLoadBalancerAttributes",
                   "elasticloadbalancing:DescribeLoadBalancers",
                   "elasticloadbalancing:DescribeTags",
@@ -36,8 +37,8 @@ resource "aws_iam_role_policy" "ecs_elb_policy" {
 #############
 # IAM Role #
 ############
-resource "aws_iam_role" "ecs_elb_role" {
-  name               = format("%s_elb", replace(lower(var.name), " ", "_"))
+resource "aws_iam_role" "ecs_alb_role" {
+  name               = format("%s_alb", replace(lower(var.name), " ", "_"))
   assume_role_policy = <<-EOF
   {
     "Version": "2012-10-17",
@@ -64,7 +65,7 @@ resource "aws_iam_role" "ecs_elb_role" {
 ###################
 # Security Group #
 ##################
-resource "aws_security_group" "ecs-elb-sg" {
+resource "aws_security_group" "ecs_alb_sg" {
   name        = var.name
   description = "Allow TCP inbound traffic"
   vpc_id      = var.vpc_id
@@ -92,28 +93,41 @@ resource "aws_security_group" "ecs-elb-sg" {
 }
 
 ########
-# ELB #
+# ALB #
 #######
-resource "aws_elb" "ecs-cluster-elb" {
-  name            = replace(lower(var.name), " ", "-")
-  subnets         = var.subnet_cidr_blocks_public
-  security_groups = [aws_security_group.ecs-elb-sg.id]
+resource aws_alb_target_group ecs_alb_tg {
+  name     = replace(lower(var.name), " ", "-")
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
 
-  listener {
-    instance_port     = 80
-    instance_protocol = "http"
-    lb_port           = 80
-    lb_protocol       = "http"
-  }
-
-  cross_zone_load_balancing   = true
-  idle_timeout                = 400
-  connection_draining         = true
-  connection_draining_timeout = 400
 
   tags = {
     Terraform = "true"
     Name      = var.name
     Env       = var.environment_tag
+  }
+}
+
+resource "aws_alb" "main" {
+  name            = replace(lower(var.name), " ", "-")
+  subnets         = var.subnet_cidr_blocks_public
+  security_groups = [aws_security_group.ecs_alb_sg.id]
+
+  tags = {
+    Terraform = "true"
+    Name      = var.name
+    Env       = var.environment_tag
+  }
+}
+
+resource "aws_alb_listener" "front_end" {
+  load_balancer_arn = aws_alb.main.id
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.ecs_alb_tg.id
+    type             = "forward"
   }
 }

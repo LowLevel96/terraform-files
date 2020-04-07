@@ -1,3 +1,9 @@
-.terraform/
+it .terraform/
 terraform.tfstate
 terraform.tfstate.backup
+.terraform.tfstate.lock.info
+develop.tfvars
+modules/.DS_Store
+ecs-cluster/modules/.DS_Store
+nginx-elb/
+ecs-cluster/.terraform/

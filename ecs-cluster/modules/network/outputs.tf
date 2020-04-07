@@ -13,7 +13,7 @@ data aws_subnet_ids private-subnets {
   }
 }
 
-data aws_subnet_ids public-subnets {
+data aws_subnet_ids public_subnets {
   vpc_id = aws_vpc.ecs-cluster-vpc.id
 
   depends_on = [aws_vpc.ecs-cluster-vpc, aws_subnet.private-1, aws_subnet.private-2, aws_subnet.public-1, aws_subnet.public-2]
@@ -33,7 +33,7 @@ output subnet_cidr_blocks_private {
 }
 
 output subnet_cidr_blocks_public {
-  value = data.aws_subnet_ids.public-subnets.ids
+  value = data.aws_subnet_ids.public_subnets.ids
 }
 
 output vpc_cidr_block {
