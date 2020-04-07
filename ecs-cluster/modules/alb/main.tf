@@ -101,6 +101,10 @@ resource aws_alb_target_group ecs_alb_tg {
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
+  health_check {
+    path = "/api/health"
+    port = "80"
+  }
 
   tags = {
     Terraform = "true"
